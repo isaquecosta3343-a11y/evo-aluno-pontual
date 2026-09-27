@@ -116,34 +116,12 @@
   <div class="tabs" id="tabs"></div>
   <div class="hero" id="hero"></div>
 
-  <div class="toolbar">
-    <div class="subtitle" style="margin:0;">Prêmios disponíveis</div>
-    <div>
-      
-      <button class="save-btn" id="saveBtn">Salvar alterações</button>
-    </div>
-  </div>
-
-  <div class="cards" id="cards"></div>
-  <button class="addbtn addprize" id="addPrize" style="display:none;">+ Prêmio</button>
+  <div class="subtitle" style="margin-top:22px;">Prêmios disponíveis</div>
+  <div class="cards" id="cards"><p style="color:#8a7a95;text-align:center;">Carregando dados...</p></div>
 
   <p class="hint">prêmios resgartáveis apenas após a conclusão do curso os cartões acumulados durante o curso deverão ser entregues ao CRA no final do curso para contabilização dos pontos acumulados.</p>
 </div>
 <div class="toast" id="toast"></div>
-
-<div class="modal-backdrop" id="prizeModal" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prizeModalTitle">
-    <h3 id="prizeModalTitle">Adicionar prêmio</h3>
-    <label for="newPrizeName">Nome do prêmio</label>
-    <input id="newPrizeName" type="text" autocomplete="off" placeholder="Ex.: Vale-presente de R$ 50">
-    <label for="newPrizePoints">Pontos necessários para o curso atual</label>
-    <input id="newPrizePoints" type="number" min="0" inputmode="numeric" value="0">
-    <div class="modal-actions">
-      <button type="button" class="modal-cancel" id="cancelPrize">Cancelar</button>
-      <button type="button" class="modal-confirm" id="confirmPrize">Adicionar prêmio</button>
-    </div>
-  </div>
-</div>
 
 <script id="app">
 var DATA = /*<data>*/{"courses":[{"id":"manutencao","name":"Manutenção de Celulares e Tablets"},{"id":"beleza","name":"Beleza Facial"},{"id":"manicure","name":"Manicure"},{"id":"administracao","name":"Administração"},{"id":"farmacia","name":"Atendente de Farmácia"},{"id":"ingles","name":"Inglês"},{"id":"informatica","name":"Informática"}],"prizes":[{"id":"fone","name":"Fone de ouvido sem fio"},{"id":"watch","name":"Relógio smartwatch"},{"id":"bot100","name":"Vale Boticário R$ 100"},{"id":"bot50","name":"Vale Boticário R$ 50"},{"id":"recarga","name":"Recarga de celular R$ 30"},{"id":"brutus100","name":"Vale Brutus R$ 100"},{"id":"quitacao","name":"Quitação de uma parcela"}],"points":{"manutencao":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"beleza":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"manicure":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"administracao":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"farmacia":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"ingles":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400},"informatica":{"fone":250,"watch":250,"bot100":300,"bot50":200,"recarga":90,"brutus100":150,"quitacao":400}}}/*</data>*/;
@@ -173,9 +151,9 @@ var PRIZE_ART = {
   watch:{type:'icon', key:'watch'},
   recarga:{type:'icon', key:'bolt'},
   quitacao:{type:'icon', key:'receipt'},
-  bot100:{type:'img', src:BOT_IMG},
-  bot50:{type:'img', src:BOT_IMG},
-  brutus100:{type:'img', src:BRUTUS_IMG}
+  bot100:{type:'icon', key:'gift'},
+  bot50:{type:'icon', key:'gift'},
+  brutus100:{type:'icon', key:'gift'}
 };
 var DEFAULT_PRIZE_ART = {type:'icon', key:'gift'};
 
@@ -210,7 +188,7 @@ async function loadRemote(){
 }
 function renderTabs(){var box=document.getElementById('tabs');box.innerHTML='';DATA.courses.forEach(c=>{var art=courseArt(c.id),t=el('button','tab'+(c.id===state.active?' active':''),ICONS[art.icon]);var label=document.createElement('span');label.textContent=c.name;t.appendChild(label);t.onclick=()=>{state.active=c.id;renderAll();};box.appendChild(t);});}
 function renderHero(){var box=document.getElementById('hero'),c=DATA.courses.find(x=>x.id===state.active);if(!c){box.style.display='none';return;}var art=courseArt(c.id);box.style.display='flex';box.style.background=art.grad;box.innerHTML=ICONS[art.icon]+'<h2>'+escapeHtml(c.name)+'</h2>';}
-function renderCards(){var box=document.getElementById('cards');box.innerHTML='';if(!state.active){box.innerHTML='<p style="color:#8a7a95;">Nenhum curso cadastrado ainda.</p>';return;}var pts=DATA.points[state.active]||{};DATA.prizes.slice().sort((a,b)=>(pts[a.id]??0)-(pts[b.id]??0)).forEach(p=>{var card=el('div','card'),art=prizeArt(p.id),artBox=el('div','art');artBox.innerHTML=art.type==='img'?('<img src="'+art.src+'" alt="">'):ICONS[art.key];card.appendChild(artBox);card.appendChild(el('div','name',escapeHtml(p.name)));card.appendChild(el('div','pts',(pts[p.id]??0)+' pts'));box.appendChild(card);});document.getElementById('addPrize').style.display='none';}
+function renderCards(){var box=document.getElementById('cards');box.innerHTML='';if(!state.active){box.innerHTML='<p style="color:#8a7a95;">Nenhum curso cadastrado ainda.</p>';return;}var pts=DATA.points[state.active]||{};var available=DATA.prizes.filter(function(p){return Object.prototype.hasOwnProperty.call(pts,p.id);}).sort(function(a,b){return (pts[a.id]??0)-(pts[b.id]??0);});if(!available.length){box.innerHTML='<p style="color:#8a7a95;">Nenhum prêmio disponível para este curso.</p>';return;}available.forEach(function(p){var card=el('div','card'),art=prizeArt(p.id),artBox=el('div','art');artBox.innerHTML=art.type==='img'?('<img src="'+art.src+'" alt="">'):ICONS[art.key];card.appendChild(artBox);card.appendChild(el('div','name',escapeHtml(p.name)));card.appendChild(el('div','pts',(pts[p.id]??0)+' pts'));box.appendChild(card);});}
 function renderAll(){renderTabs();renderHero();renderCards();}
 async function initApp(){try{await loadRemote();renderAll();}catch(e){console.error(e);document.getElementById('cards').innerHTML='<p style="color:#b42318;text-align:center;">Não foi possível carregar os prêmios. Tente recarregar a página.</p>';}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initApp);else initApp();
@@ -218,10 +196,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <style>
-  .student-only-note{margin:12px auto 0;max-width:1100px;padding:10px 14px;border-radius:12px;background:#eef9ff;color:#17627d;font-size:13px;text-align:center}
-  .student-only-note a{color:#17627d;font-weight:700;text-decoration:none}
+  .student-only-note{margin:18px auto 0;max-width:780px;padding:10px 14px;border-radius:12px;background:#eef9ff;color:#17627d;font-size:12px;text-align:center;font-weight:700}
 </style>
-<div class="student-only-note">Consulta pública • <a href="admin.html">Acesso administrativo</a></div>
+<div class="student-only-note">Consulta pública • dados atualizados online</div>
 
 
 </body>
